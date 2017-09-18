@@ -5,6 +5,11 @@ namespace MariusUsvat.Slingshot.UI.GameObjects
 {
     public class Ground
     {
+        public Rectangle Boundries
+        {
+            get { return this.boundries; }
+        }
+
         private Texture2D texture;
         private Rectangle boundries; // Used for collision
         private Vector2 size;

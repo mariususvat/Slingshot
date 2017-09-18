@@ -12,8 +12,8 @@ namespace MariusUsvat.Slingshot.UI
     /// </summary>
     public class SlingshotGame : Game
     {
-        public static float GRAVITATIONAL_ACCELERATION = 0f;
-        public static float FRICTION_DECELERATION = 0f;
+        public static float GRAVITATIONAL_ACCELERATION = 0.5f;
+        public static float FRICTION_DECELERATION = 0.02f;
 
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
@@ -64,7 +64,7 @@ namespace MariusUsvat.Slingshot.UI
             graphics.ApplyChanges();
 
             ground = new Ground();
-            slingshot = new GameObjects.Slingshot();
+            slingshot = new GameObjects.Slingshot(new Vector2(150, 485), new Vector2(169, 504), 4f);
             target = new Target();
             projectiles = new List<Projectile>();
 
@@ -94,6 +94,7 @@ namespace MariusUsvat.Slingshot.UI
 
             cursorArrow = Content.Load<Texture2D>("cursor_arrow");
             cursorHand = Content.Load<Texture2D>("cursor_hand");
+            cursorCurrent = cursorArrow;
         }
 
         /// <summary>
@@ -122,21 +123,26 @@ namespace MariusUsvat.Slingshot.UI
             currentMouseState = Mouse.GetState();
             Vector2 currentMousePosition = new Vector2(currentMouseState.X, currentMouseState.Y);
 
-            cursorCurrent = cursorArrow;
-
             if (currentMouseState.LeftButton == ButtonState.Pressed && previousMouseState.LeftButton == ButtonState.Released)
             {
+                cursorCurrent = cursorHand;
                 projectiles.Add(new Projectile(projectileTexture, currentMousePosition));
             }
             if (currentMouseState.LeftButton == ButtonState.Released && previousMouseState.LeftButton == ButtonState.Pressed)
             {
-                foreach(Projectile p in projectiles)
+                cursorCurrent = cursorArrow;
+                foreach (Projectile p in projectiles)
                     if (!p.IsFired)
-                        p.Fire(slingshot.CalculateLaunchDirection(p), 40f);
+                        p.Fire(slingshot.CalculateLaunchDirection(p), slingshot.CalculateLaunchSpeed(p));
             }
 
             foreach (Projectile p in projectiles)
-                p.Update(currentMousePosition);
+            {
+                if (!p.IsFired)
+                    p.UpdateUnfired(currentMousePosition, slingshot.LaunchPoint, slingshot.DistanceDivider);
+                else
+                    p.Update(ground.Boundries);
+            }
 
             base.Update(gameTime);
         }
@@ -159,9 +165,9 @@ namespace MariusUsvat.Slingshot.UI
             {
                 if (!p.IsFired)
                 {
-                    DrawLineBetween(spriteBatch, strapTexture, p.Center, slingshotFarBranchPosition, Color.White);
+                    DrawLineBetween(spriteBatch, strapTexture, p.Center, slingshot.FarBranchPosition, Color.White);
                     p.Draw(spriteBatch);
-                    DrawLineBetween(spriteBatch, strapTexture, p.Center, slingshotNearBranchPosition, Color.White);
+                    DrawLineBetween(spriteBatch, strapTexture, p.Center, slingshot.NearBranchPosition, Color.White);
                 }
                 else
                     p.Draw(spriteBatch);

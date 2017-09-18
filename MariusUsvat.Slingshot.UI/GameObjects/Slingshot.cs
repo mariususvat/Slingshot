@@ -6,17 +6,36 @@ namespace MariusUsvat.Slingshot.UI.GameObjects
 {
     public class Slingshot
     {
+        public Vector2 NearBranchPosition
+        {
+            get { return new Vector2(this.launchPoint.X - 12, this.launchPoint.Y - 4); }
+        }
+
+        public Vector2 FarBranchPosition
+        {
+            get { return new Vector2(this.launchPoint.X + 12, this.launchPoint.Y + 4); }
+        }
+
         public Vector2 LaunchPoint
         {
-            get { return new Vector2(169, 504); }
+            get { return this.launchPoint; }
+        }
+
+        public float DistanceDivider
+        {
+            get { return this.distanceDivider; }
         }
 
         private Texture2D texture;
         private Vector2 position;
+        private Vector2 launchPoint;
+        private float distanceDivider;
 
-        public Slingshot()
+        public Slingshot(Vector2 position, Vector2 launchPoint, float distanceDivider)
         {
-            this.position = new Vector2(150, 485);
+            this.position = position;
+            this.launchPoint = launchPoint;
+            this.distanceDivider = distanceDivider;
         }
 
         public void Initialize(Texture2D texture)
@@ -31,11 +50,18 @@ namespace MariusUsvat.Slingshot.UI.GameObjects
 
         public Vector2 CalculateLaunchDirection(Projectile p)
         {
-            Vector2 hypothenuseVector = new Vector2(p.Center.X - this.LaunchPoint.X, p.Center.Y - this.LaunchPoint.Y);
-            double alphaAngle = Math.Atan(Math.Tan(hypothenuseVector.Y / hypothenuseVector.X));
-            Console.WriteLine(alphaAngle * 180 / Math.PI);
+            Vector2 direction = new Vector2(this.launchPoint.X - p.Center.X, this.launchPoint.Y - p.Center.Y);
+            float highestAbsValue = Math.Abs(Math.Abs(direction.X) > Math.Abs(direction.Y) ? direction.X : direction.Y);
 
-            return new Vector2((float) Math.Cos(alphaAngle), (float) Math.Sin(alphaAngle));
+            return new Vector2(direction.X / highestAbsValue, direction.Y / highestAbsValue);
+        }
+
+        public float CalculateLaunchSpeed(Projectile p)
+        {
+            Vector2 direction = new Vector2(this.launchPoint.X - p.Center.X, this.launchPoint.Y - p.Center.Y);
+            float distance = (float) Math.Sqrt(Math.Pow(p.Center.X - this.launchPoint.X, 2) + Math.Pow(p.Center.Y - this.launchPoint.Y, 2));
+
+            return MathHelper.Clamp(distance / this.distanceDivider, 0, Projectile.MAX_SPEED);
         }
     }
 }
